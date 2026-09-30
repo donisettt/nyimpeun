@@ -153,8 +153,9 @@ class DashboardSpendingNotifier extends StateNotifier<DashboardSpendingState> {
     for (final tx in transactions) {
       if (tx.isExpense) {
         totalExpense += tx.amount as int;
-        categoryTotals[tx.categoryId] = (categoryTotals[tx.categoryId] ?? 0) + (tx.amount as int);
-        categoryCounts[tx.categoryId] = (categoryCounts[tx.categoryId] ?? 0) + 1;
+        final catId = tx.categoryId ?? 'uncategorized';
+        categoryTotals[catId] = (categoryTotals[catId] ?? 0) + (tx.amount as int);
+        categoryCounts[catId] = (categoryCounts[catId] ?? 0) + 1;
       }
     }
 

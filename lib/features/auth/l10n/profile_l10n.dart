@@ -23,6 +23,11 @@ abstract class ProfileL10n {
   String get menuHelp;
   String get menuLogout;
 
+  // Integrations Section
+  String get sectionIntegrations;
+  String get menuTelegram;
+  String get menuTelegramSub;
+
   // Image Picker
   String get pickFromGallery;
   String get takePhoto;
@@ -82,6 +87,10 @@ class ProfileL10nId implements ProfileL10n {
   @override String get menuHelp => 'Ketentuan Aplikasi';
   @override String get menuLogout => 'Keluar Akun';
 
+  @override String get sectionIntegrations => 'Integrasi';
+  @override String get menuTelegram => 'Bot Telegram';
+  @override String get menuTelegramSub => 'Catat transaksi via chat';
+
   @override String get pickFromGallery => 'Pilih dari Galeri';
   @override String get takePhoto => 'Ambil Foto';
 
@@ -125,6 +134,10 @@ class ProfileL10nSu implements ProfileL10n {
   @override String get menuUserGuide => 'Pituduh Pamaké';
   @override String get menuHelp => 'Katangtuan Aplikasi';
   @override String get menuLogout => 'Kaluar Akun';
+
+  @override String get sectionIntegrations => 'Integrasi';
+  @override String get menuTelegram => 'Bot Telegram';
+  @override String get menuTelegramSub => 'Catet transaksi via chat';
 
   @override String get pickFromGallery => 'Pilih ti Galeri';
   @override String get takePhoto => 'Potret Foto';

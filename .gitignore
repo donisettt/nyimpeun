@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+.vscode
+.dart_tool
+.idea
+
+# Environment variables
+.env
+.env.*
+
+# Generated SQLite / local DB files (if any)
+*.db
+*.sqlite
+
+# NodeJS / Deno temp
+node_modules/
+npm-debug.log
+yarn-error.log

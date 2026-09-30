@@ -98,6 +98,21 @@ class ProfilePage extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
+              // Integrations Section
+              _ProfileMenuSection(
+                title: l10n.sectionIntegrations,
+                items: [
+                  _MenuItem(
+                    icon: Icons.telegram_rounded,
+                    label: l10n.menuTelegram,
+                    subtitle: l10n.menuTelegramSub,
+                    onTap: () => context.push(AppRoutes.telegramIntegration),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
               // General Section
               _ProfileMenuSection(
                 title: l10n.sectionGeneral,
