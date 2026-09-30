@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nyimpeun/app/app.dart';
 import 'package:nyimpeun/app/providers/app_providers.dart';
 import 'package:nyimpeun/core/constants/supabase_constants.dart';
+import 'package:nyimpeun/core/services/notification_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -32,10 +34,18 @@ Future<void> main() async {
   await Supabase.initialize(
     url: SupabaseConstants.url,
     anonKey: SupabaseConstants.anonKey, // ignore: deprecated_member_use
+    debug: false,
   );
+
+  // Inisialisasi Firebase
+  await Firebase.initializeApp();
 
   // Inisialisasi SharedPreferences
   final prefs = await SharedPreferences.getInstance();
+
+  // Setup Notification Service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   // Semua inisialisasi lokal selesai — lepas native splash sekarang.
   // Auth check (network) akan ditangani oleh loading screen di dalam app.

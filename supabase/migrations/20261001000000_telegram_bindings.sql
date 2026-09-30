@@ -13,18 +13,21 @@ CREATE TABLE IF NOT EXISTS public.telegram_bindings (
 ALTER TABLE public.telegram_bindings ENABLE ROW LEVEL SECURITY;
 
 -- Allow user to view their own bindings
+DROP POLICY IF EXISTS "Users can view their own bindings" ON public.telegram_bindings;
 CREATE POLICY "Users can view their own bindings"
 ON public.telegram_bindings
 FOR SELECT
 USING (auth.uid() = user_id);
 
 -- Allow user to insert their own bindings
+DROP POLICY IF EXISTS "Users can insert their own bindings" ON public.telegram_bindings;
 CREATE POLICY "Users can insert their own bindings"
 ON public.telegram_bindings
 FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Allow user to delete their own bindings
+DROP POLICY IF EXISTS "Users can delete their own bindings" ON public.telegram_bindings;
 CREATE POLICY "Users can delete their own bindings"
 ON public.telegram_bindings
 FOR DELETE

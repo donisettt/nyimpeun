@@ -205,6 +205,93 @@ Panduan penting:
     const replyMessage = `✅ Berhasil mencatat ${typeLabel}!\n\n${emoji} Nominal: ${amountFmt}\n📁 Kategori: ${catName}\n💳 Dompet: ${walName}\n📝 Catatan: ${parsed.note || '-'}`;
     await sendTelegramMessage(chatId, replyMessage);
 
+    // --- Send Push Notification via FCM ---
+    try {
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('user_fcm_tokens')
+        .select('fcm_token')
+        .eq('user_id', userId);
+
+      console.log(`[FCM] userId: ${userId}, tokenCount: ${tokenData?.length ?? 0}, tokenError: ${tokenError?.message ?? 'none'}`);
+
+      if (tokenData && tokenData.length > 0) {
+        const serviceAccountStr = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
+        if (!serviceAccountStr) {
+          console.log("[FCM] FIREBASE_SERVICE_ACCOUNT is not set. Skipping.");
+        } else {
+          const serviceAccount = JSON.parse(serviceAccountStr);
+          console.log(`[FCM] Using project: ${serviceAccount.project_id}`);
+
+          // Generate OAuth2 token manually for FCM v1
+          const { SignJWT } = await import('https://deno.land/x/jose@v4.14.4/jwt/sign.ts');
+          const { importPKCS8 } = await import('https://deno.land/x/jose@v4.14.4/key/import.ts');
+          
+          const privateKeyStr = serviceAccount.private_key.replace(/\\n/g, '\n');
+          const privateKey = await importPKCS8(privateKeyStr, 'RS256');
+          const jwt = await new SignJWT({
+            iss: serviceAccount.client_email,
+            sub: serviceAccount.client_email,
+            aud: 'https://oauth2.googleapis.com/token',
+            scope: 'https://www.googleapis.com/auth/firebase.messaging',
+          })
+            .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+            .setIssuedAt()
+            .setExpirationTime('1h')
+            .sign(privateKey);
+
+          const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+          });
+          const tokenJson = await tokenRes.json();
+          const accessToken = tokenJson.access_token;
+          console.log(`[FCM] Got access token: ${accessToken ? 'YES' : 'NO'}, error: ${tokenJson.error ?? 'none'}`);
+
+          for (const { fcm_token } of tokenData) {
+            const fcmRes = await fetch(`https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: {
+                  token: fcm_token,
+                  notification: {
+                    title: isIncome ? '💵 Pemasukan Baru' : '💸 Pengeluaran Baru',
+                    body: `${amountFmt} • ${catName} • ${walName}`,
+                  },
+                  android: {
+                    priority: 'HIGH',
+                    notification: {
+                      sound: 'default',
+                      channel_id: 'nyimpeun_transactions',
+                    }
+                  },
+                  data: {
+                    type: 'transaction',
+                    transaction_type: parsed.type.toLowerCase(),
+                    wallet_id: parsedWalletId || '',
+                  }
+                }
+              }),
+            });
+            const fcmJson = await fcmRes.json();
+            console.log(`[FCM] Send result: ${JSON.stringify(fcmJson)}`);
+            if (!fcmRes.ok) {
+              await sendTelegramMessage(chatId, `[DEBUG FCM RESPONSE ERROR]: ${JSON.stringify(fcmJson)}`);
+            }
+          }
+        }
+      } else {
+        console.log("[FCM] No FCM tokens found for user. Notification skipped.");
+      }
+    } catch (pushErr) {
+      console.error("[FCM] Failed to send push notification:", pushErr);
+      await sendTelegramMessage(chatId, `[DEBUG FCM ERROR]: ${pushErr.message || pushErr}`);
+    }
+
   } catch (e) {
     console.error(e);
     await sendTelegramMessage(chatId, "Maaf, sistem AI sedang kesulitan memahami pesannya. Pastikan sebutkan nama dompet & kategorinya.");
@@ -229,9 +316,17 @@ serve(async (req) => {
 
     // Async execution to avoid Telegram timeout
     if (text.startsWith('/start ') || text.startsWith('NYMP-')) {
-      handleOTP(chatId, text); 
+      if (typeof EdgeRuntime !== 'undefined') {
+        EdgeRuntime.waitUntil(handleOTP(chatId, text));
+      } else {
+        handleOTP(chatId, text); 
+      }
     } else if (!text.startsWith('/')) {
-      processTransaction(chatId, text);
+      if (typeof EdgeRuntime !== 'undefined') {
+        EdgeRuntime.waitUntil(processTransaction(chatId, text));
+      } else {
+        processTransaction(chatId, text);
+      }
     }
 
     // Return 200 OK immediately
