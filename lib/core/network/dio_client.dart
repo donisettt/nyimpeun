@@ -102,4 +102,4 @@ class DioClient {
 }
 
 // ignore: avoid_print
-void debugPrint(String message) => print('[DioClient] $message');
+void debugPrint(String message) {}

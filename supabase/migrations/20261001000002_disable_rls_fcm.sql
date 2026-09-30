@@ -1,0 +1,1 @@
+ALTER TABLE public.user_fcm_tokens DISABLE ROW LEVEL SECURITY;

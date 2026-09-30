@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nyimpeun/core/network/dio_client.dart';
 import 'package:nyimpeun/core/storage/local_storage.dart';
 import 'package:nyimpeun/core/storage/secure_storage.dart';
+import 'package:nyimpeun/core/services/notification_service.dart';
 import 'package:nyimpeun/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:nyimpeun/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:nyimpeun/features/auth/data/repositories/auth_repository_impl.dart';
@@ -37,6 +38,12 @@ final secureStorageProvider = Provider<SecureStorage>((ref) {
 final localStorageProvider = Provider<LocalStorage>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return LocalStorage(prefs);
+});
+
+// ─── Services ─────────────────────────────────────────────────────────────────
+
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
 });
 
 // ─── Network Layer ────────────────────────────────────────────────────────────
@@ -75,7 +82,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authStateNotifierProvider =
     StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
-  return AuthStateNotifier(repository: ref.watch(authRepositoryProvider));
+  return AuthStateNotifier(
+    repository: ref.watch(authRepositoryProvider),
+    notificationService: ref.watch(notificationServiceProvider),
+  );
 });
 
 final registerViewModelProvider =

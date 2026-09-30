@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nyimpeun/core/errors/app_exception.dart';
+import 'package:nyimpeun/core/services/notification_service.dart';
 import 'package:nyimpeun/features/auth/domain/entities/user_entity.dart';
 import 'package:nyimpeun/features/auth/domain/repositories/auth_repository.dart';
 
@@ -39,13 +40,17 @@ class AuthEmailConfirmationRequired extends AuthState {
 // ─── Auth Notifier ────────────────────────────────────────────────────────────
 
 class AuthStateNotifier extends StateNotifier<AuthState> {
-  AuthStateNotifier({required AuthRepository repository})
-      : _repository = repository,
+  AuthStateNotifier({
+    required AuthRepository repository,
+    required NotificationService notificationService,
+  })  : _repository = repository,
+        _notificationService = notificationService,
         super(const AuthInitial()) {
     _initialize();
   }
 
   final AuthRepository _repository;
+  final NotificationService _notificationService;
 
   Future<void> _initialize() async {
     state = const AuthLoading();
@@ -57,6 +62,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
       if (user != null) {
         state = AuthAuthenticated(user: user);
+        await _notificationService.saveTokenToSupabase(user.id);
       } else {
         state = const AuthUnauthenticated();
       }
@@ -76,6 +82,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       state = AuthAuthenticated(user: user);
+      await _notificationService.saveTokenToSupabase(user.id);
     } on AppException catch (e) {
       state = AuthError(e.message);
     } catch (e) {
@@ -107,6 +114,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         );
         if (currentUser != null) {
           state = AuthAuthenticated(user: currentUser);
+          await _notificationService.saveTokenToSupabase(currentUser.id);
         } else {
           // Session tidak ada — perlu konfirmasi email
           state = AuthEmailConfirmationRequired(email: email);
@@ -122,8 +130,15 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    final currentUser = state is AuthAuthenticated 
+        ? (state as AuthAuthenticated).user 
+        : null;
+        
     state = const AuthLoading();
     try {
+      if (currentUser != null) {
+        await _notificationService.removeTokenFromSupabase(currentUser.id);
+      }
       await _repository.signOut();
       state = const AuthUnauthenticated();
     } catch (_) {
