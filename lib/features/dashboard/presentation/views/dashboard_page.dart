@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nyimpeun/app/providers/analytics_providers.dart';
 import 'package:nyimpeun/app/providers/app_providers.dart';
 import 'package:nyimpeun/app/providers/dashboard_providers.dart';
@@ -28,11 +29,43 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _selectedIndex = 0;
+  RealtimeChannel? _transactionChannel;
+
   @override
   void initState() {
     super.initState();
     // Load semua data home saat pertama kali dashboard dibuka
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadHomeData());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadHomeData();
+      _setupRealtime();
+    });
+  }
+
+  void _setupRealtime() async {
+    // 1. Inject JWT token so Realtime bypasses RLS correctly
+    final token = await ref.read(secureStorageProvider).getAccessToken();
+    if (token != null) {
+      Supabase.instance.client.realtime.setAuth(token);
+    }
+
+    // 2. Listen to transactions table
+    _transactionChannel = Supabase.instance.client
+        .channel('public:transactions')
+        .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'transactions',
+            callback: (payload) {
+              debugPrint('Realtime payload received: $payload');
+              _loadHomeData();
+            })
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    _transactionChannel?.unsubscribe();
+    super.dispose();
   }
 
   String get _userId {

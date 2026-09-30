@@ -10,7 +10,7 @@ enum TransactionType {
 
   static TransactionType fromString(String value) {
     return TransactionType.values.firstWhere(
-      (e) => e.value == value,
+      (e) => e.value.toLowerCase() == value.toLowerCase(),
       orElse: () => TransactionType.expense,
     );
   }

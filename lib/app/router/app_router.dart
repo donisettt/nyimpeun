@@ -11,6 +11,7 @@ import 'package:nyimpeun/features/auth/presentation/views/register_page.dart';
 import 'package:nyimpeun/features/auth/presentation/views/terms_page.dart';
 import 'package:nyimpeun/features/dashboard/presentation/views/dashboard_page.dart';
 import 'package:nyimpeun/features/onboarding/presentation/views/onboarding_page.dart';
+import 'package:nyimpeun/features/auth/presentation/views/telegram_integration_page.dart';
 
 // ─── Route Names ──────────────────────────────────────────────────────────────
 class AppRoutes {
@@ -24,6 +25,7 @@ class AppRoutes {
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
   static const profileChangePassword = '/profile/change-password';
+  static const telegramIntegration = '/profile/telegram-integration';
   static const terms = '/terms';
 }
 
@@ -75,6 +77,7 @@ class RouterNotifier extends ChangeNotifier {
       AppRoutes.profile,
       AppRoutes.profileEdit,
       AppRoutes.profileChangePassword,
+      AppRoutes.telegramIntegration,
     ].contains(location);
 
     // ── Onboarding ────────────────────────────────────────────────────────────
@@ -155,6 +158,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.profileChangePassword,
         builder: (context, state) => const ChangePasswordPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.telegramIntegration,
+        builder: (context, state) => const TelegramIntegrationPage(),
       ),
       GoRoute(
         path: AppRoutes.terms,
