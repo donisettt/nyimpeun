@@ -219,47 +219,113 @@ class _TelegramIntegrationPageState extends ConsumerState<TelegramIntegrationPag
                   ),
                 ] else if (state.otpCode != null) ...[
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                        BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))
                       ]
                     ),
                     child: Column(
                       children: [
-                        Text('Kode Tautan Kamu:', style: AppTypography.bodyMedium),
+                        // Step 1 — Copy code
+                        Row(
+                          children: [
+                            Container(
+                              width: 28, height: 28,
+                              decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                              child: const Center(child: Text('1', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Salin kode berikut',
+                                style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Text(
-                            state.otpCode!,
-                            style: AppTypography.headlineMedium.copyWith(fontWeight: FontWeight.bold, letterSpacing: 2),
+                        GestureDetector(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: state.otpCode!));
+                            AppSnackBar.success(context, 'Kode disalin ke clipboard!');
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  state.otpCode!,
+                                  style: AppTypography.titleMedium.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 3,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const Icon(Icons.copy_rounded, color: AppColors.primary, size: 20),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            final botUrl = Uri.parse('https://t.me/NyimpeunBot?start=${state.otpCode}');
-                            final launched = await launchUrl(botUrl, mode: LaunchMode.externalApplication);
-                            if (!launched) {
-                              Clipboard.setData(ClipboardData(text: state.otpCode!));
-                              AppSnackBar.success(context, 'Kode disalin! Kirimkan kode ini ke @NyimpeunBot di Telegram');
-                            }
-                          },
-                          icon: const Icon(Icons.open_in_new_rounded),
-                          label: const Text('Buka Telegram'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF229ED9),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        const SizedBox(height: 20),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        const SizedBox(height: 20),
+
+                        // Step 2 — Open Bot
+                        Row(
+                          children: [
+                            Container(
+                              width: 28, height: 28,
+                              decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                              child: const Center(child: Text('2', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Buka bot Telegram lalu kirimkan kode di atas',
+                                style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final botUrl = Uri.parse('https://t.me/NyimpeunAppBot');
+                              try {
+                                // Coba buka app Telegram langsung
+                                await launchUrl(botUrl, mode: LaunchMode.externalNonBrowserApplication);
+                              } catch (_) {
+                                try {
+                                  // Fallback: buka via browser jika Telegram tidak terinstall
+                                  await launchUrl(botUrl, mode: LaunchMode.externalApplication);
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    AppSnackBar.error(context, 'Tidak dapat membuka Telegram. Silakan buka @NyimpeunAppBot secara manual.');
+                                  }
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.send_rounded, size: 18),
+                            label: const Text('Buka @NyimpeunAppBot'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF229ED9),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                            ),
                           ),
                         ),
                       ],

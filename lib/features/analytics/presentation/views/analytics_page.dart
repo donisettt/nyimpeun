@@ -316,9 +316,14 @@ class _NetBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final walletName = state.selectedWalletId == null
+    final walletName = state.selectedWalletId == null || state.wallets.isEmpty
         ? l10n.allWallets
-        : state.wallets.firstWhere((w) => w.id == state.selectedWalletId, orElse: () => state.wallets.first).name;
+        : state.wallets
+            .firstWhere(
+              (w) => w.id == state.selectedWalletId,
+              orElse: () => state.wallets.first,
+            )
+            .name;
 
     return Container(
       padding: const EdgeInsets.all(20), // Reduced from 24

@@ -60,18 +60,20 @@ const kEWallets = [
 Future<bool?> showAddWalletSheet(
   BuildContext context, {
   WalletEntity? editEntity,
+  int walletCount = 0,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => AddWalletSheet(editEntity: editEntity),
+    builder: (_) => AddWalletSheet(editEntity: editEntity, walletCount: walletCount),
   );
 }
 
 class AddWalletSheet extends ConsumerStatefulWidget {
-  const AddWalletSheet({super.key, this.editEntity});
+  const AddWalletSheet({super.key, this.editEntity, this.walletCount = 0});
   final WalletEntity? editEntity;
+  final int walletCount;
 
   @override
   ConsumerState<AddWalletSheet> createState() => _AddWalletSheetState();
@@ -101,9 +103,14 @@ class _AddWalletSheetState extends ConsumerState<AddWalletSheet> {
     WalletType.eWallet: Icons.phonelink_rounded,
   };
 
+  // True jika ini rekening pertama (saat create)
+  bool get _isFirstWallet => widget.editEntity == null && widget.walletCount == 0;
+
   @override
   void initState() {
     super.initState();
+    // Rekening pertama otomatis jadi utama
+    if (_isFirstWallet) _isDefault = true;
     if (widget.editEntity != null) {
       final e = widget.editEntity!;
       _selectedType = e.type;
@@ -527,26 +534,39 @@ class _AddWalletSheetState extends ConsumerState<AddWalletSheet> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.cardElevated,
+                      color: _isFirstWallet
+                          ? AppColors.primaryContainer.withValues(alpha: 0.3)
+                          : AppColors.cardElevated,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(
+                        color: _isFirstWallet
+                            ? AppColors.primary.withValues(alpha: 0.4)
+                            : AppColors.border,
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.star_rounded,
-                            color: AppColors.warning, size: 20),
+                        Icon(
+                          Icons.star_rounded,
+                          color: _isFirstWallet
+                              ? AppColors.primary
+                              : AppColors.warning,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Jadikan Dompet Utama',
+                                'Dompet Utama',
                                 style: AppTypography.bodyMedium
                                     .copyWith(fontWeight: FontWeight.w600),
                               ),
                               Text(
-                                'Digunakan sebagai dompet default transaksi',
+                                _isFirstWallet
+                                    ? 'Rekening pertama otomatis jadi dompet utama'
+                                    : 'Digunakan sebagai dompet default transaksi',
                                 style: AppTypography.labelSmall
                                     .copyWith(color: AppColors.textMuted),
                               ),
@@ -555,9 +575,13 @@ class _AddWalletSheetState extends ConsumerState<AddWalletSheet> {
                         ),
                         Switch(
                           value: _isDefault,
-                          onChanged: (v) =>
-                              setState(() => _isDefault = v),
-                          activeThumbColor: AppColors.primary,
+                          // Jika rekening pertama: toggle dikunci ON
+                          onChanged: _isFirstWallet
+                              ? null
+                              : (v) => setState(() => _isDefault = v),
+                          activeThumbColor: _isFirstWallet
+                              ? AppColors.primary
+                              : AppColors.primary,
                           activeTrackColor: AppColors.primaryContainer,
                         ),
                       ],

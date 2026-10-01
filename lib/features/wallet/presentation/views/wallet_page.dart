@@ -242,7 +242,8 @@ class _WalletPageState extends ConsumerState<WalletPage> {
   }
 
   Future<void> _openAddWallet() async {
-    final result = await showAddWalletSheet(context);
+    final walletCount = ref.read(walletListProvider).wallets.length;
+    final result = await showAddWalletSheet(context, walletCount: walletCount);
     if (result == true) _loadData();
   }
 
