@@ -20,6 +20,9 @@ abstract class AuthRepository {
   /// Ambil user yang sedang login
   Future<UserEntity?> getCurrentUser();
 
+  /// Cek apakah sesi aktif
+  Future<bool> hasSession();
+
   /// Refresh session token
   Future<void> refreshSession();
 

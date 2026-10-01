@@ -108,13 +108,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       final userId = user.id;
       if (userId.isNotEmpty) {
         // Verifikasi apakah token sudah tersimpan (session granted)
-        final currentUser = await _repository.getCurrentUser().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () => null,
-        );
-        if (currentUser != null) {
-          state = AuthAuthenticated(user: currentUser);
-          await _notificationService.saveTokenToSupabase(currentUser.id);
+        final hasSession = await _repository.hasSession();
+        if (hasSession) {
+          state = AuthAuthenticated(user: user);
+          await _notificationService.saveTokenToSupabase(user.id);
         } else {
           // Session tidak ada — perlu konfirmasi email
           state = AuthEmailConfirmationRequired(email: email);

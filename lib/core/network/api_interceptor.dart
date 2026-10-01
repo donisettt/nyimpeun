@@ -33,15 +33,15 @@ AppException _handleResponseError(Response? response) {
   final message = _extractMessage(data);
 
   return switch (statusCode) {
-    400 => ValidationException(message ?? 'Request tidak valid'),
+    400 => ValidationException(message ?? 'Request tidak valid (400)'),
     401 => AuthException(message ?? 'Sesi berakhir, silahkan login kembali'),
     403 => AuthException(message ?? 'Akses ditolak'),
     404 => NotFoundException(message ?? 'Data tidak ditemukan'),
     409 => ServerException(message ?? 'Data sudah ada', statusCode: statusCode),
-    422 => ValidationException(message ?? 'Validasi gagal'),
+    422 => ValidationException(message ?? 'Validasi gagal (422)'),
     429 =>
-      ServerException('Terlalu banyak request, coba lagi nanti', statusCode: statusCode),
-    500 => ServerException('Server sedang bermasalah, coba lagi nanti', statusCode: statusCode),
+      ServerException(message ?? 'Terlalu banyak request, coba lagi nanti', statusCode: statusCode),
+    500 => ServerException(message ?? 'Server sedang bermasalah, coba lagi nanti', statusCode: statusCode),
     _ => ServerException(message ?? 'Terjadi kesalahan', statusCode: statusCode),
   };
 }
@@ -49,17 +49,20 @@ AppException _handleResponseError(Response? response) {
 String? _extractMessage(dynamic data) {
   if (data == null) return null;
   if (data is Map) {
-    // Supabase auth error: { "error": "...", "error_description": "..." }
     if (data['error_description'] != null) {
       return _translateSupabaseError(data['error_description'].toString());
+    }
+    if (data['msg'] != null) {
+      return _translateSupabaseError(data['msg'].toString());
+    }
+    if (data['message'] != null) {
+      return _translateSupabaseError(data['message'].toString());
     }
     if (data['error'] != null) {
       return _translateSupabaseError(data['error'].toString());
     }
-    // PostgREST error: { "message": "...", "hint": "..." }
-    if (data['message'] != null) return data['message'].toString();
   }
-  if (data is String) return data;
+  if (data is String) return _translateSupabaseError(data);
   return null;
 }
 

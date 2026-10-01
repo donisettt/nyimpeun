@@ -70,10 +70,29 @@ class AuthRepositoryImpl implements AuthRepository {
         name: fullName,
         email: response.user.email,
       );
+    } else {
+      // Session null — coba auto sign-in langsung
+      // (ini terjadi jika Supabase sudah disable email confirm tapi response
+      // tidak mengembalikan session field)
+      try {
+        final signInResponse = await _remote.signInWithPassword(
+          SignInRequest(email: email, password: password),
+        );
+        await _local.saveTokens(
+          accessToken: signInResponse.accessToken,
+          refreshToken: signInResponse.refreshToken,
+          userId: signInResponse.user.id,
+        );
+        await _local.cacheUserInfo(
+          name: fullName,
+          email: signInResponse.user.email,
+        );
+        return signInResponse.user.toEntity();
+      } catch (_) {
+        // Auto sign-in gagal — kembalikan user saja (perlu konfirmasi email)
+      }
     }
 
-    // Kembalikan user dari response signup — jangan query profile dulu
-    // karena trigger DB mungkin belum selesai membuat row profiles
     return response.user.toEntity();
   }
 
@@ -84,6 +103,12 @@ class AuthRepositoryImpl implements AuthRepository {
       await _remote.signOut(token);
     }
     await _local.clearSessionFull();
+  }
+
+  @override
+  Future<bool> hasSession() async {
+    final token = await _local.getAccessToken();
+    return token != null;
   }
 
   @override

@@ -105,6 +105,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final authState = ref.watch(authStateNotifierProvider);
     final user = authState is AuthAuthenticated ? authState.user : null;
     final l10n = DashboardL10n.of(ref.watch(languageProvider));
+    final analyticsState = ref.watch(analyticsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -129,13 +130,29 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    const DashboardBalanceCard(),
-                    // Spacing is handled internally by DashboardBalanceCard's shadow margin
+                    
+                    if (analyticsState.wallets.isEmpty && !analyticsState.isLoading)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.asset(
+                            'assets/images/home/banner_home.webp',
+                            width: double.infinity,
+                            fit: BoxFit.fitWidth,
+                          ),
+                        ),
+                      )
+                    else
+                      const DashboardBalanceCard(),
+                      
+                    // Cards lainnya tetap muncul di bawahnya
                     const DashboardQuickActions(),
                     const SizedBox(height: 24),
                     const DashboardSpendingSummary(),
                     const SizedBox(height: 24),
                     const DashboardRecentTransactions(),
+                    
                     const SizedBox(height: 32),
                   ],
                 ),
