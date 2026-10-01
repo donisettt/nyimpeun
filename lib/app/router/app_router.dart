@@ -85,6 +85,14 @@ class RouterNotifier extends ChangeNotifier {
       return AppRoutes.onboarding;
     }
 
+    // ── Email Confirmation ────────────────────────────────────────────────────
+    if (authState is AuthEmailConfirmationRequired) {
+      if (location != AppRoutes.emailConfirmation) {
+        return AppRoutes.emailConfirmation;
+      }
+      return null; // Already there
+    }
+
     // ── Sudah login ───────────────────────────────────────────────────────────
     if (isAuthenticated) {
       if (isAuthRoute || location == AppRoutes.onboarding) {
